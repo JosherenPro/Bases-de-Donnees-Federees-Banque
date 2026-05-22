@@ -1,0 +1,2 @@
+# Fichiers sensibles à ne jamais commiter sur GitHub
+.env
