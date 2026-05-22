@@ -1,0 +1,99 @@
+services:
+  postgres-hub:
+    build: ./postgres-hub
+    container_name: postgres-hub
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./postgres-hub/init:/docker-entrypoint-initdb.d
+    networks:
+      - banque_federation_net
+    restart: unless-stopped
+
+  mysql-credit:
+    build: ./mysql-credit
+    container_name: mysql-credit
+    env_file:
+      - .env
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-credit/init:/docker-entrypoint-initdb.d
+    networks:
+      - banque_federation_net
+    restart: unless-stopped
+
+  mssql-compta:
+    build: ./mssql-compta
+    container_name: mssql-compta
+    env_file:
+      - .env
+    environment:
+      ACCEPT_EULA: ${ACCEPT_EULA}
+      MSSQL_SA_PASSWORD: ${MSSQL_PASSWORD}
+      MSSQL_PID: ${MSSQL_PID}
+    ports:
+      - "${MSSQL_PORT}:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+      - ./mssql-compta/init:/docker-entrypoint-initdb.d
+    networks:
+      - banque_federation_net
+    restart: unless-stopped
+
+  fastapi-backend:
+    build: ./backend
+    container_name: fastapi-backend
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    networks:
+      - banque_federation_net
+    depends_on:
+      - postgres-hub
+    restart: unless-stopped
+
+  react-frontend:
+    build: ./frontend
+    container_name: react-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - banque_federation_net
+    depends_on:
+      - fastapi-backend
+    restart: unless-stopped
+
+networks:
+  banque_federation_net:
+    driver: bridge
+
+volumes:
+  pg_data:
+  mysql_data:
+  mssql_data:
