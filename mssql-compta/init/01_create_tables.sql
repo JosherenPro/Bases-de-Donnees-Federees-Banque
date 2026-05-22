@@ -1,3 +1,13 @@
+-- Création de la base si elle n'existe pas
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'mssql_compta')
+BEGIN
+    CREATE DATABASE mssql_compta;
+END
+GO
+
+USE mssql_compta;
+GO
+
 CREATE TABLE plan_comptable (
     numero_compte NVARCHAR(10) PRIMARY KEY,
     libelle NVARCHAR(100) NOT NULL,
